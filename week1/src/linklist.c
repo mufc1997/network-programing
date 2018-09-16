@@ -11,7 +11,7 @@ LinkList *newNode(int status) {
 
 LinkList *toEndLinkList(LinkList *head) {
 	if (head == NULL) {
-		printf("Link List is null");
+		printf("\nLink List is null");
 		return NULL;
 	} else {
 		LinkList *current = head;
@@ -26,7 +26,7 @@ LinkList *toEndLinkList(LinkList *head) {
 
 void *append(LinkList **head, LinkList *node) {
 	if (node == NULL) {
-		printf("Can't append node to link list\n");
+		printf("\nCan't append node to link list\n");
 	} else if (*head == NULL){
 		*head = node;
 	} else {
@@ -37,7 +37,7 @@ void *append(LinkList **head, LinkList *node) {
 
 void *insert(LinkList **head, LinkList *node) {
 	if (node == NULL) {
-		printf("node is NULL");
+		printf("\nNode is NULL");
 	} else if (head == NULL) {
 		*head = node;
 	} else {
@@ -48,7 +48,7 @@ void *insert(LinkList **head, LinkList *node) {
 
 void *delete(LinkList **head, int status) {
 	if (*head == NULL) {
-		printf("Cant delete this node");
+		printf("\nCant delete this node");
 	} else {
 		LinkList *current = *head, *prev;
 
@@ -78,7 +78,7 @@ void *delete(LinkList **head, int status) {
 }
 void printLinkList(LinkList *head) {
 	if (head == NULL) {
-		printf("Link list is NULL\n");
+		printf("\nLink list is NULL\n");
 	} else {
 		LinkList *current = head;
 
