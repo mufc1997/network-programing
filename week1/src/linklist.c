@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../lib/linklist.h"
 
 
-LinkList *newNode(int status) {
+LinkList *newNode(char *username, char *password, int status) {
 	LinkList *node = (LinkList *)malloc(sizeof(LinkList));
+	strcpy(node->username, username);
+	strcpy(node->password, password);
 	node->status = status;
 	return node;
 }
@@ -74,8 +77,8 @@ void *delete(LinkList **head, int status) {
 			current = current->next;
 		}
 	}
-
 }
+
 void printLinkList(LinkList *head) {
 	if (head == NULL) {
 		printf("\nLink list is NULL\n");
@@ -83,9 +86,17 @@ void printLinkList(LinkList *head) {
 		LinkList *current = head;
 
 		while (current != NULL) {
-			printf("Status: %d\n", current->status);
+			printf("%s\t%s\t%d\n", current->username, current->password, current->status);
 			current = current->next;
 		}
+	}
+}
+
+void printNode(LinkList *node) {
+	if (node == NULL) {
+		printf("\nNode is NULL");
+	} else {
+		printf("\nUsername: %s\nPassword: %s\nStatus: %d\n", node->username, node->password, node->status);
 	}
 }
 
