@@ -35,7 +35,9 @@ void *writeFile(FILE *file, LinkList *head) {
 	} else {
 		LinkList *current = head;
 
-		while (current != NULL) {
+		fseek(file, 0, SEEK_SET);
+
+		while (current->next != NULL) {
 			fprintf(file, "%s %s %d", current->username, current->password, current->status);
 
 			if (current->next != NULL) {
@@ -44,7 +46,5 @@ void *writeFile(FILE *file, LinkList *head) {
 
 			current = current->next;
 		}
-
-		fclose(file);
 	}
 }

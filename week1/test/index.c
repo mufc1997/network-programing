@@ -23,7 +23,6 @@ int main() {
 	do {
 		menu();
 		scanf("%d", &select);
-		printLinkList(list);
 
 		switch (select) {
 			case 1: {
@@ -41,15 +40,31 @@ int main() {
 				append(&list, newNode(username, password, 1));
 
 				printf("Successful registration\n");
+
+				writeFile(file, list);
 				break;
 			}
 
 			case 2: {
 				char username[30], password[30];
-				printf("Username: "); scanf("%s", username);
-				printf("Password: "); scanf("%s", password);
-				checkLogin(list, username, password);
+				LinkList *node = NULL;
 
+				printf("Username: "); scanf("%s", username);
+
+				if ((node = search(list, username)) == NULL) {
+					printf("Cannot find account\n");
+					break;
+				} else {
+					if (node->status == 0) {
+						printf("Account is blocked\n");
+						break;
+					}
+				}
+
+				printf("Password: "); scanf("%s", password);
+				checkLogin(&list, username, password);
+
+				writeFile(file, list);
 				break;
 			}
 
@@ -59,14 +74,10 @@ int main() {
 				if ((node = beforeUseApp(list)) == NULL) {
 					printf("Cannot find account\n");
 				} else {
-					if (node->is_login == 0) {
-						printf("Account is not sign in\n");
+					if (node->status == 1) {
+						printf("Account is active\n");
 					} else {
-						if (node->status == 1) {
-							printf("Account is active\n");
-						} else {
-							printf("Account is blocked\n");
-						}
+						printf("Account is blocked\n");
 					}
 				}
 
@@ -79,20 +90,24 @@ int main() {
 				if ((node = beforeUseApp(list)) == NULL) {
 					printf("Cannot find account\n");
 				} else {
-					if (node->is_login == 0) {
-						printf("Account is not sign in\n");
+					if (node->status == 0) {
+						printf("Account is blocked\n");
 					} else {
-						printf("Goodbye %s\n", node->username);
-						node->is_login = 0;
+						if (node->is_login == 0) {
+							printf("Account is not sign in\n");
+						} else {
+							printf("Goodbye %s\n", node->username);
+							node->is_login = 0;
+						}
 					}
 				}
 
 				break;
 			}
 			default: {
-				fseek(file, 0, SEEK_SET );
 				writeFile(file, list);
 				destroy(&list);
+				fclose(file);
 				printf("\nYour choice error\n");
 				active = 0;
 				break;
