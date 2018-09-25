@@ -4,9 +4,21 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+enum Type {
+	IP_TYPE,
+	DOMAIN_TYPE
+};
 
-void display_info(char *official_ip, char *alias) {
-	printf("Official IP: %s\n", official_ip);
+void display_info(enum Type type, char *official, char *alias) {
+	char official_display[30];
+
+	if(type == IP_TYPE) {
+		strcpy(official_display, "Official name");
+	} else {
+		strcpy(official_display, "Official IP");
+	}
+
+	printf("%s: %s\n", official_display, official);
 }
 
 void get_info_ip_address(char *ipAddress) {
@@ -14,14 +26,24 @@ void get_info_ip_address(char *ipAddress) {
 	inet_aton(ipAddress, &addr);
 	struct hostent *host = gethostbyaddr(&addr, sizeof(addr), AF_INET);
 
-	display_info(host->h_name, NULL);
+	if(host == NULL) {
+		printf("Not found information\n");
+		return;
+	}
+
+	display_info(IP_TYPE, host->h_name, NULL);
 }
 
 void get_info_domain(char *domain) {
 	struct hostent *host = gethostbyname(domain);
+
+	if(host == NULL) {
+		printf("Not found information\n");
+		return;
+	}
 	char *ip_buffer = inet_ntoa(*((struct in_addr*)host->h_addr_list[0]));
 
-	display_info(ip_buffer, NULL);
+	display_info(DOMAIN_TYPE, ip_buffer, NULL);
 }
 
 int check_number(char *ip_part) {
@@ -45,6 +67,7 @@ int ip_valid(char *ip) {
 	{ 
 		if(!check_number(token))
 			return 0;
+
 		token = strtok(NULL, "."); 
 		count++;
 	}
@@ -52,7 +75,6 @@ int ip_valid(char *ip) {
 	if(count != 4) 
 		return 0;
 
-	printf("count: %d\n", count);
 	return 1;
 }
 
