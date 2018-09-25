@@ -15,7 +15,7 @@ void display_info(enum Type type, char *official, char *alias[]) {
 		strcpy(alias_display, "Alias name");
 	} else {
 		strcpy(official_display, "Official IP");
-		strcpy(alias_display, "Alias name");
+		strcpy(alias_display, "Alias IP");
 	}
 
 	printf("%s: %s\n", official_display, official);
