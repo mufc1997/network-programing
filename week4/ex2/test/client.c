@@ -7,31 +7,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "../lib/hosts.h"
+#include <netdb.h>
 
 #define BUFF_SIZE 1024
-
-// receive buff socker from server
-int recv_socket(int client_sock, char *buff, struct sockaddr *server_addr, int *sin_size) {
-	int bytes_received;
-
-	bytes_received = recvfrom(client_sock, buff, BUFF_SIZE - 1, 0, server_addr, sin_size);
-
-	if(strcmp(buff, "Error") == 0)
-		return 0;
-
-	if(bytes_received < 0){
-		perror("Error: ");
-		close(client_sock);
-		return 0;
-	}
-	buff[bytes_received] = '\0';
-
-	// if buff null not print
-	if(strcmp(buff, "") != 0)
-		printf("\t%s\n", buff);
-
-	return 1;
-}
 
 int main(int argc, char *argv[]){
 	if (argc < 3) {
@@ -45,8 +24,8 @@ int main(int argc, char *argv[]){
 	int client_sock;
 	char buff[BUFF_SIZE];
 	struct sockaddr_in server_addr;
-	int bytes_sent, sin_size;
-	
+	int bytes_sent, bytes_received, sin_size;
+
 	//Step 1: Construct a UDP socket
 	if ((client_sock=socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){  /* calls socket() */
 		perror("\nError: ");
@@ -62,10 +41,8 @@ int main(int argc, char *argv[]){
 	//Step 3: Communicate with server
 	while(1) {
 		printf("INPUT: ");
-		memset(buff,'\0',(strlen(buff)+1));
 		fgets(buff, BUFF_SIZE, stdin);
 
-		// if buff null stop application
 		if(strcmp(buff, "\n") == 0) {
 			return 1;
 		}
@@ -80,14 +57,15 @@ int main(int argc, char *argv[]){
 		}
 
 		printf("OUTPUT:\n");
-		if(recv_socket(client_sock, buff, (struct sockaddr *) &server_addr, &sin_size) == 1) {
-			recv_socket(client_sock, buff, (struct sockaddr *) &server_addr, &sin_size);
-		} else {
-			printf("\t%s\n", buff);
+
+		bytes_received = recvfrom(client_sock, buff, BUFF_SIZE - 1, 0, (struct sockaddr *) &server_addr, &sin_size);
+		if(bytes_received < 0){
+			perror("Error: ");
 			close(client_sock);
 			return 0;
 		}
 
+		printf("%s\n", buff);
 	};
 
 	close(client_sock);

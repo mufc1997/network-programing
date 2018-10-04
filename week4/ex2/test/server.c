@@ -8,6 +8,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include "../lib/hosts.h"
+
 #define BEGIN_NUMBER 48
 #define END_NUBMER 57
 #define BEGIN_STRING_UP 65
@@ -16,32 +19,6 @@
 #define END_STRING_DOWN 122
 
 #define BUFF_SIZE 1024
-//Validate buff socket 
-int check_string(char *str) {
-	for(int i = 0; i < strlen(str) - 1; i++) {
-		if (!isalnum(str[i]))
-			return 0;
-	}
-	return 1;
-
-}
-
-//Split buff to number and string
-void split_string(char *main_string, char number[], char str[]) {
-	int j = 0, k = 0;
-	strcpy(number, "");
-	strcpy(str, "");
-
-	for(int i = 0; i < strlen(main_string) - 1; i++) {
-		if(isdigit(main_string[i]))
-			number[j++] = main_string[i];
-		else if(isalpha(main_string[i])) 
-			str[k++] = main_string[i];
-	}
-
-	number[j] = '\0';
-	str[k] = '\0';
-}
 
 int main(int argc, char *argv[])
 {
@@ -52,11 +29,12 @@ int main(int argc, char *argv[])
 
 	int PORT = atoi(argv[1]);
 	int server_sock; /* file descriptors */
-	char buff[BUFF_SIZE], number[BUFF_SIZE], str[BUFF_SIZE];
+	char buff[BUFF_SIZE];
 	int bytes_sent, bytes_received;
 	struct sockaddr_in server; /* server's address information */
 	struct sockaddr_in client; /* client's address information */
 	struct sockaddr_in cliaddr;
+	struct hostent *host;
 	int sin_size;
 
 	//Step 1: Construct a UDP socket
@@ -69,7 +47,7 @@ int main(int argc, char *argv[])
 	server.sin_family = AF_INET;         
 	server.sin_port = htons(PORT);   /* Remember htons() from "Conversions" section? =) */
 	server.sin_addr.s_addr = INADDR_ANY;  /* INADDR_ANY puts your IP address automatically */   
-	bzero(&(server.sin_zero),8); /* zero the rest of the structure */
+	bzero(&(server.sin_zero),sizeof(struct sockaddr_in)); /* zero the rest of the structure */
 
   
 	if(bind(server_sock,(struct sockaddr*)&server,sizeof(struct sockaddr))==-1){ /* calls bind() */
@@ -79,7 +57,7 @@ int main(int argc, char *argv[])
 	
 	//Step 3: Communicate with clients
 	while(1){
-		sin_size=sizeof(struct sockaddr_in);
+		sin_size = sizeof(struct sockaddr);
     		
 		bytes_received = recvfrom(server_sock, buff, BUFF_SIZE-1, 0, (struct sockaddr *) &client, &sin_size);
 		
@@ -90,17 +68,19 @@ int main(int argc, char *argv[])
 			printf("[%s:%d]: %s", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port), buff);
 		}
 
-		if(check_string(buff) == 1) {
-			split_string(buff, number, str);
+		if(ip_valid(buff)) {
+			if(!get_info_ip_address(buff)) {
+				strcpy(buff, "Not found information");
+			}
 
-			bytes_sent = sendto(server_sock, number, bytes_received, 0, (struct sockaddr *) &client, sin_size ); /* send to the client welcome message */
-			
-			bytes_sent = sendto(server_sock, str, bytes_received, 0, (struct sockaddr *) &client, sin_size ); /* send to the client welcome message */
+		  bytes_sent = sendto(server_sock, buff, BUFF_SIZE - 1, 0, (struct sockaddr *) &client, sin_size); /* send to the client welcome message */
 		} else {
-			strcpy(buff, "Error");
+			if(!get_info_domain(buff)) {
+				strcpy(buff, "Not found information");
+			}	
 
-			bytes_sent = sendto(server_sock, buff, bytes_received, 0, (struct sockaddr *) &client, sin_size ); /* send to the client welcome message */
-		}
+		  bytes_sent = sendto(server_sock, buff, BUFF_SIZE - 1, 0, (struct sockaddr *) &client, sin_size); /* send to the client welcome message */
+		} 
 
 		if (bytes_sent < 0)
 			perror("\nError: ");					
