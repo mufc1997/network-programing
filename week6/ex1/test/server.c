@@ -20,6 +20,7 @@
 char method[30];
 char value[50];
 
+//Chech user exits, check username and password
 int checkUser (LinkList *root, char *username, char *password) {
 	if (root == NULL) {
 		return 0;
@@ -29,13 +30,13 @@ int checkUser (LinkList *root, char *username, char *password) {
 		while (current != NULL) {
 			if (strcmp(current->username, username) == 0) {
 				if (current->status == 0) {
-					return 2; 
+					return 2; //user is blocked
 				}
 				else if (password == NULL)
 					return 1;// Username exist
 				else 
 					if (strcmp(current->password, password) == 0) 
-						return 3;
+						return 3; //User logined success
 			}
 			current = current->next;
 		}
@@ -44,6 +45,7 @@ int checkUser (LinkList *root, char *username, char *password) {
 	return 0;
 }
 
+//Split message to method and value
 int split(char *recv_data) {
 	char str[1024];
 	strcpy(str, recv_data);
@@ -69,15 +71,16 @@ int split(char *recv_data) {
 	return 1;
 }
 
+//Get information user by username, password
 LinkList *getUser (LinkList *root, char *username, char *password) {
 	LinkList *current = root;
 
 	while (current != NULL) {
 		if (password == NULL) {
-			if (strcmp(current->username, username) == 0)
+			if (strcmp(current->username, username) == 0) //get with only username
 				return current;
 		} else {
-			if (strcmp(current->username, username) == 0 && strcmp(current->password, password) == 0)
+			if (strcmp(current->username, username) == 0 && strcmp(current->password, password) == 0)//get with username and password
 				return current;
 		}
 
@@ -87,6 +90,7 @@ LinkList *getUser (LinkList *root, char *username, char *password) {
 	return NULL;
 }
 
+//handle message to responseCode send to client
 void handle (LinkList **root, int *state, char *recv_data, int *responseCode, char *username, char *password) {
 	LinkList *user = NULL;
 
@@ -95,6 +99,7 @@ void handle (LinkList **root, int *state, char *recv_data, int *responseCode, ch
 		return;
 	}
 
+	// Alert user logined
 	if (*state == AUTHENTICATED) {
 		if (strcmp(method, "LOGOUT") != 0) {
 			*responseCode = ERROR_LOGINED;
@@ -102,28 +107,30 @@ void handle (LinkList **root, int *state, char *recv_data, int *responseCode, ch
 		}
 	}
 
+	// method is user
 	if (strcmp(method, "USER") == 0) {
 		if (*state != UNDEFINE) {
-			*responseCode = ERROR_STATE;
+			*responseCode = ERROR_STATE; //error state
 			return;
 		}
 
 		strcpy(username, value);
-
+		
+		//check user exist
 		int check = checkUser(*root, username, NULL);
 		if (!check) {
 			*responseCode = ERROR_USER;
 		} else {
-			if (check == 2) {
+			if (check == 2) { //check user is blocked
 				*responseCode = ERROR_USER_BLOCKED;
 				return;
 			}
-			*responseCode = SUCCESS_USER;
-			*state = UNAUTHENTICATE;
+			*responseCode = SUCCESS_USER; //alert user input user success
+			*state = UNAUTHENTICATE; //to next state
 		}
-	} else if (strcmp(method, "PASS") == 0) {
-		if (*state != UNAUTHENTICATE) {
-			*responseCode = ERROR_STATE;
+	} else if (strcmp(method, "PASS") == 0) { //method is pass
+		if (*state != UNAUTHENTICATE) { 
+			*responseCode = ERROR_STATE; //error state
 			return;
 		}
 
@@ -137,7 +144,7 @@ void handle (LinkList **root, int *state, char *recv_data, int *responseCode, ch
 			*responseCode = SUCCESS_PASSWORD;
 			*state = AUTHENTICATED;
 
-			user = getUser(*root, username, password);
+			user = getUser(*root, username, password); //logined
 			user->is_login = 1;
 		} else {
 			user = getUser(*root, username, NULL); // login error
@@ -159,15 +166,24 @@ void handle (LinkList **root, int *state, char *recv_data, int *responseCode, ch
 			return;
 		}
 
+		char oldUsername[50];
+		strcpy(oldUsername, username);
 		strcpy(username, value);
 
+		//Check user exist
 		if (checkUser(*root, username, NULL) == 0) {
 			*responseCode = ERROR_USER;
 		} else {
-			*state = UNDEFINE;
+			if (strcmp(username, oldUsername) != 0) {
+				strcpy(username, oldUsername);
+				*responseCode = ERROR_LOGOUT;
+				return;
+			}
+
+			*state = UNDEFINE; //state to first state
 			user = getUser(*root, username, password);
 			user->is_login = 0;
-			*responseCode = SUCCESS_LOGOUT;
+			*responseCode = SUCCESS_LOGOUT; //log out success
 		}
 	} else {
 		*responseCode = ERROR_FORM_MESSAGE;
@@ -239,6 +255,7 @@ int main(int argc, char *argv[])
 			}
 			else{
 				handle(&root, &state, buff, &responseCode, username, password);
+				writeFile(file, "account.txt", root);
 			}
 
 			//echo to client

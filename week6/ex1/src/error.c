@@ -17,7 +17,7 @@ void errorMessage (int code) {
 			strcpy(message, "STATE IS WRONG\n");
 			break;
 		case ERROR_LOGOUT:
-			strcpy(message, "YOU CANT LOG OUT\n");
+			strcpy(message, "YOU CANT LOG OUT. USERNAME NOT CURRENT USER\n");
 			break;
 		case ERROR_LOGINED:
 			strcpy(message, "YOU LOGINED\n");
