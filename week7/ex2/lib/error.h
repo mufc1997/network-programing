@@ -1,0 +1,1 @@
+void errorMessage (int code);
